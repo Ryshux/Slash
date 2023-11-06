@@ -31,12 +31,22 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	/*
+	* Callbacks for input
+	*/
 	virtual void Jump() override;
 	void EKeyPressed();
 	virtual void Attack();
 	void Dodge();
 
-	
+	/*
+	* Play Montage Function
+	*/
+	void PlayAttackMontage();
+
+	UFUNCTION(BlueprintCallable)
+	void AttackEnd();
+	bool CanAttack();
 
 protected:
 	virtual void BeginPlay() override;
@@ -59,12 +69,12 @@ protected:
 	void Looking(const FInputActionValue& Value);
 	void Move(const FInputActionValue& Value);
 
-	AWeapon* Weapon1H;
-
 private:
 	
 	ECharacterState CharacterState = ECharacterState::ECS_Unequipped;
-	
+
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	EActionState ActionState = EActionState::EAS_Unoccupied;
 
 	UPROPERTY(VisibleAnywhere)
 	USpringArmComponent* SpringArm;

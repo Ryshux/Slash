@@ -13,6 +13,7 @@
 #include "GroomComponent.h"
 #include "Items/Item.h"
 #include "Items/Weapons/Weapon.h"
+#include "Items/Weapons/Weapon2HTest.h"
 #include "Animation/AnimMontage.h"
 
 
@@ -95,6 +96,8 @@ void ASlashCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 void ASlashCharacter::Move(const FInputActionValue& Value)
 {
+	if (ActionState == EActionState::EAS_Attacking) return;
+
 	const FVector2D MovementValue = Value.Get<FVector2D>();
 
 	//const FVector Forward = GetActorForwardVector();
@@ -136,50 +139,70 @@ void ASlashCharacter::EKeyPressed()
 	if (OverlappingWeapon)
 	{
 		OverlappingWeapon->Equip(GetMesh(), FName("RightHandSocket"));
-
-		
-		// Issues Here
-		if (Weapon1H)
+		if (OverlappingWeapon->GetWeaponType() == EWeaponType::ECS_OneHandedWeapon)
 		{
-			EWeaponType WeaponType = Weapon1H->GetWeaponType();
-			if (WeaponType == EWeaponType::ECS_OneHandedWeapon)
-			{
-				UE_LOG(LogTemp, Error, TEXT("Grabbing 1H weapon!"));
-			}
+			UE_LOG(LogTemp, Error, TEXT("Grabbing 1H weapon!"));
+			CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
 		}
-		
-		CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
 	}
+	AWeapon2HTest* Overlapping2H = Cast<AWeapon2HTest>(OverlappingItem);
+	if (Overlapping2H)
+	{
+		Overlapping2H->Equip(GetMesh(), FName("RightHandSocket"));
+		if (Overlapping2H->GetWeaponType() == EWeaponType::ECS_TwoHandedWeapon)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Grabbing 2H weapon!"));
+			CharacterState = ECharacterState::ECS_EquippedTwoHandedWeapon;
+		}
+	}
+
 }
 
 void ASlashCharacter::Attack()
 {
-	if (CharacterState == ECharacterState::ECS_EquippedOneHandedWeapon)
+	if (CanAttack())
 	{
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance && AttackMontage)
-		{
-			AnimInstance->Montage_Play(AttackMontage);
-			int32 Selection = FMath::RandRange(0, 1);
-			FName SectionName = FName();
-			switch (Selection)
-			{
-			case 0:
-				SectionName = FName("Attack1");
-				break;
-			case 1:
-				SectionName = FName("Attack2");
-				break;
-			default:
+		PlayAttackMontage();
+		ActionState = EActionState::EAS_Attacking;
+	}	
+}
 
-				break;
-			}
-			AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);
+bool ASlashCharacter::CanAttack()
+{
+	return ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped;
+}
+
+void ASlashCharacter::PlayAttackMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && AttackMontage)
+	{
+		AnimInstance->Montage_Play(AttackMontage);
+		const int32 Selection = FMath::RandRange(0, 1);
+		FName SectionName = FName();
+		switch (Selection)
+		{
+		case 0:
+			SectionName = FName("Attack1");
+			break;
+		case 1:
+			SectionName = FName("Attack2");
+			break;
+		default:
+
+			break;
 		}
+		AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);
 	}
+}
+
+void ASlashCharacter::AttackEnd()
+{
+	ActionState = EActionState::EAS_Unoccupied;
 }
 
 void ASlashCharacter::Dodge()
 {
 
 }
+

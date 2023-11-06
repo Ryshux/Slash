@@ -49,27 +49,20 @@ void AItem::BeginPlay()
 void AItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	RunningTime += DeltaTime;
+
 
 	// Movement Rate in units of cm/s
 	float MovementRate = 50.f;
 	float RotationRate = 45.f;
 
-	// Movement Rate * DeltaTime (cm/s) * (s/frame) = (cm/frame)
-	// AddActorWorldOffset(FVector(MovementRate * DeltaTime, 0, 0));
 	
-	if (bIsBaseItem == true)
+	if (ITemState == EItemState::EIS_Hovering)
 	{
 		AddActorWorldRotation(FRotator(0, RotationRate * DeltaTime, 0));
+		AddActorWorldOffset(FVector(0, 0, TransformedSin()));
 	}
 	
-	
-	
-
-	RunningTime += DeltaTime;
-	// float DeltaZ = Amplitude * FMath::Sin(RunningTime * TimeConstant);
-	// AddActorWorldOffset(FVector(0, 0, DeltaZ));
-
-
 	// DRAW_SPHERE_SingleFrame(GetActorLocation());
 	// DRAW_VECTOR_SingleFrame(GetActorLocation(), GetActorLocation() + GetActorForwardVector() * 100);
 }
